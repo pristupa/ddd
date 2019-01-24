@@ -11,7 +11,9 @@ setup(
     url='https://github.com/pristupa/ddd',
     license='MIT',
     description='Domain-Driven Design for Python',
-    long_description=open('README.txt').read(),
-    install_requires=[],
+    long_description=open('README.md').read(),
+    install_requires=[
+        'dataclasses == 0.6',
+    ],
     python_requires=">=3.6",
 )
