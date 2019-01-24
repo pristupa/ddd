@@ -2,7 +2,7 @@ from setuptools import find_packages
 from setuptools import setup
 
 setup(
-    name='ddd',
+    name='py-ddd',
     version='0.1.0',
     author='Pavel V. Pristupa',
     author_email='pristupa@gmail.com',
