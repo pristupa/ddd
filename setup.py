@@ -3,7 +3,7 @@ from setuptools import setup
 
 setup(
     name='py-ddd',
-    version='0.1.0',
+    version='0.1.1',
     author='Pavel V. Pristupa',
     author_email='pristupa@gmail.com',
     packages=find_packages(exclude=['tests*']),
@@ -11,7 +11,6 @@ setup(
     url='https://github.com/pristupa/ddd',
     license='MIT',
     description='Domain-Driven Design for Python',
-    long_description=open('README.md').read(),
     install_requires=[
         'dataclasses == 0.6',
     ],
