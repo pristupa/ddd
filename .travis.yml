@@ -1,10 +1,27 @@
+dist: trusty
+sudo: required
 language: python
+cache: pip
+
 python:
   - "3.6"
+
 install:
-  - pip install -r requirements.txt
+  - pip install -r requirements/ci.txt
+
+before_script:
+- coverage erase
+
 script:
-  - pytest
+  - tox -e py36
+
+after_success:
+  - |
+    if [[ -z "$TOXENV" && -z "$PYPI_DEPLOY" ]]; then
+      chmod +x coverage.sh
+      ./coverage.sh
+    fi
+
 deploy:
   provider: pypi
   user: pristupa
@@ -12,4 +29,3 @@ deploy:
     secure: eu/PXzjeKTNYa+A/2GhE6XkY193I8ppmORLwOCUxS1TKq0Zip0cse+Tyny505ScX2f4rGE1mBx0mE4Jdy7mvvC10gnhHybLnmjKtZ3+hZjKiiCLYSg92zQpRAQinc3YTJe2xiM7hMLs61hhw1XowV+7I8yOkHi0/q7fUj6HTALYM1dgwd+DsrAEcRO1z8VBHsyo5ijTXibJN0tykkI6IuwUVYJjN9bWPME+WCbtO9cZ2XoDE3NN2sDLqxoTBtJijpVU2GqqCd+kIc8xrRuC7YcnRX13WHRMQI9TmH0f6WKiUmOIg29TI7S1YrWybk+vlNtUJQxFJYTA8jQ1cbGT3dPxMN6Lxqnsk/GaNvnVlCPI0hUHLY05MY9oHGhJIV/var6LuQB7vZ/bm7t0SPaFNy60g6CrKhga+ccSkmayP6BZOK4fceaeaZ+Sk1vVUeveqc+Duy1m+7SvZk+c6mlILRF2K0agL03dnKo+us6mQdMlIyko8lHgiRnzxW0SVTLYYM3XTXWf5Z+iqsYdMIBDrGeh90QCKTEqDJsd5WzH9Q1z0tlD9ROAuqfZzAbl/HXdwx82px4dXADdGngReWraoMpOVB2Dt/HyEfZC+/Eg8uMpihBiere9+dTj1Imjrt0QK7iA6vWRxYxYAs2t4wBf6lDp1KQi12bCFY1i/lTVOk8c=
   on:
     tags: true
-    python: 3.6

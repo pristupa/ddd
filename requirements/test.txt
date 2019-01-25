@@ -1,0 +1,3 @@
+# requirements for running the tests via pytest
+pytest>=3.6
+pytest-cov>=2.5.1
