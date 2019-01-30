@@ -12,6 +12,7 @@ _instance_getter: Callable[[Type[T]], T] = lambda cls: cls()
 _domain_event_handlers = defaultdict(list)
 
 
+# noinspection PyPep8Naming
 class domain_event_handler:
     """Decorator for method in class"""
 
@@ -38,14 +39,21 @@ class domain_event_handler:
 
 def handle_domain_event(domain_event: DomainEvent) -> None:
     domain_event_class = type(domain_event)
-    if domain_event_class in _domain_event_handlers:
-        for handler_cls, handler in _domain_event_handlers[domain_event_class]:
-            handler_instance = _get_instance(handler_cls)
-            handler(handler_instance, domain_event)
+    if domain_event_class not in _domain_event_handlers:
+        raise ValueError(
+            f'Unknown domain event {domain_event_class}. Please register at least one domain event handler'
+        )
+    for handler_cls, handler in _domain_event_handlers[domain_event_class]:
+        handler_instance = _instance_getter(handler_cls)
+        handler(handler_instance, domain_event)
 
 
-def _get_instance(cls: Type[T]) -> T:
-    return _instance_getter(cls)
+def delete_domain_event_handler(cls):
+    del _domain_event_handlers[cls]
+
+
+def get_instance_getter():
+    return _instance_getter
 
 
 def set_instance_getter(func: Callable[[Type[T]], T]):

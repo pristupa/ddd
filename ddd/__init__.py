@@ -1,4 +1,3 @@
-from .aggregate_root import AggregateRoot
 from .domain_event import DomainEvent
 from .domain_event_collection import DomainEventCollection
 from .domain_event_handler import domain_event_handler
