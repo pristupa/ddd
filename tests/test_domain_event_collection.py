@@ -21,6 +21,5 @@ def test_domain_event_collection_clears_events():
     collection = DomainEventCollection()
     collection.register(DomainEvent())
     collection.register(DomainEvent())
-    collection.clear()
+    list(collection)  # Empty handle all events
     assert len(collection) == 0
-    assert list(collection) == []
