@@ -1,5 +1,6 @@
 import inspect
 from collections import defaultdict
+from threading import Lock
 from typing import Callable
 from typing import Type
 from typing import TypeVar
@@ -34,7 +35,8 @@ class domain_event_handler:
         return self._method.__get__(instance, owner)
 
     def __set_name__(self, owner, name):
-        _domain_event_handlers[self._domain_event_class].append((owner, self._method))
+        with Lock():
+            _domain_event_handlers[self._domain_event_class].append((owner, self._method))
 
 
 def handle_domain_event(domain_event: DomainEvent) -> None:
@@ -49,7 +51,8 @@ def handle_domain_event(domain_event: DomainEvent) -> None:
 
 
 def delete_domain_event_handler(cls):
-    del _domain_event_handlers[cls]
+    with Lock():
+        del _domain_event_handlers[cls]
 
 
 def get_instance_getter():
