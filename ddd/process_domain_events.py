@@ -1,7 +1,7 @@
-from itertools import chain
+from typing import Callable
 from typing import Iterable
 
-from .domain_event_collection import DomainEventCollection
+from ddd import DomainEvent
 from .domain_event_handler import handle_domain_event
 
 MAXIMUM_RECURSION_DEPTH = 10
@@ -11,16 +11,15 @@ class MaximumRecursionException(Exception):
     pass
 
 
-def process_domain_events(*collections: Iterable[DomainEventCollection]):
+def process_domain_events(domain_events_collector: Callable[[], Iterable[DomainEvent]]):
     depth = 0
-    found_domain_events = True
+    while True:
+        domain_events = domain_events_collector()
+        if not domain_events:
+            break
 
-    while found_domain_events:
-        found_domain_events = False
-
-        for domain_event in chain.from_iterable(collections):
+        for domain_event in domain_events:
             handle_domain_event(domain_event)
-            found_domain_events = True
 
         depth += 1
         if depth > MAXIMUM_RECURSION_DEPTH:

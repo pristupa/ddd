@@ -1,4 +1,5 @@
 import inspect
+import itertools
 import uuid
 
 import pytest
@@ -64,7 +65,7 @@ def instance_getter():
 
 
 def test_not_going_to_infinite_loop_for_empty_domain_events():
-    process_domain_events()
+    process_domain_events(lambda: [])
 
 
 def test_not_going_to_infinite_loop_for_entities(empty_handler):
@@ -73,14 +74,14 @@ def test_not_going_to_infinite_loop_for_entities(empty_handler):
     aggregate.domain_events.register(domain_event)
     assert inspect.isfunction(empty_handler.empty_handle)
     assert domain_event in aggregate.domain_events
-    process_domain_events(aggregate.domain_events)
+    process_domain_events(lambda: aggregate.domain_events)
 
 
 @pytest.mark.usefixtures("empty_handler")
 def test_not_going_to_infinite_loop_for_additional_domain_events():
     domain_event_collection = DomainEventCollection()
     domain_event_collection.register(DomainEvent())
-    process_domain_events(domain_event_collection)
+    process_domain_events(lambda: domain_event_collection)
 
 
 def test_try_handle_event_without_handler():
@@ -88,7 +89,7 @@ def test_try_handle_event_without_handler():
     domain_event_collection.register(DomainEvent())
 
     with pytest.raises(ValueError):
-        process_domain_events(domain_event_collection)
+        process_domain_events(lambda: domain_event_collection)
 
 
 def test_try_set_domain_events_for_entity_with_domain_events():
@@ -105,7 +106,7 @@ def test_adding_domain_event_during_iteration_domain_events():
     aggregate.domain_events.register(domain_event)
 
     with pytest.raises(Locked):
-        process_domain_events(aggregate.domain_events)
+        process_domain_events(lambda: aggregate.domain_events)
 
 
 @pytest.mark.usefixtures("recursive_handler")
@@ -118,9 +119,9 @@ def test_recursive_domain_events():
     aggregate2.domain_events.register(domain_event2)
 
     with pytest.raises(MaximumRecursionException):
-        process_domain_events(aggregate1.domain_events, aggregate2.domain_events)
+        process_domain_events(lambda: itertools.chain(aggregate1.domain_events, aggregate2.domain_events))
 
 
 @pytest.mark.usefixtures("instance_getter")
 def test_instance_set():
-    process_domain_events()
+    process_domain_events(lambda: [])

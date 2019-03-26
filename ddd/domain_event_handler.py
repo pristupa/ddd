@@ -4,6 +4,7 @@ from threading import Lock
 from typing import Callable
 from typing import Type
 from typing import TypeVar
+import warnings
 
 from .domain_event import DomainEvent
 
@@ -42,9 +43,7 @@ class domain_event_handler:
 def handle_domain_event(domain_event: DomainEvent) -> None:
     domain_event_class = type(domain_event)
     if domain_event_class not in _domain_event_handlers:
-        raise ValueError(
-            f'Unknown domain event {domain_event_class}. Please register at least one domain event handler'
-        )
+        warnings.warn(f'Unknown domain event {domain_event_class}. Please register at least one domain event handler')
     for handler_cls, handler in _domain_event_handlers[domain_event_class]:
         handler_instance = _instance_getter(handler_cls)
         handler(handler_instance, domain_event)
