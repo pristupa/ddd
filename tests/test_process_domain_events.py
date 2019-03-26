@@ -84,14 +84,6 @@ def test_not_going_to_infinite_loop_for_additional_domain_events():
     process_domain_events(lambda: domain_event_collection)
 
 
-def test_try_handle_event_without_handler():
-    domain_event_collection = DomainEventCollection()
-    domain_event_collection.register(DomainEvent())
-
-    with pytest.raises(ValueError):
-        process_domain_events(lambda: domain_event_collection)
-
-
 def test_try_set_domain_events_for_entity_with_domain_events():
     aggregate = Aggregate(uuid.uuid4())
     with pytest.raises(AttributeError):
