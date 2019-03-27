@@ -1,13 +1,6 @@
-from .domain_event_collection import DomainEventCollection
+from .domain_event_queue import DomainEvents
 
 
 class AggregateRoot:
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._domain_events: DomainEventCollection = None
+    domain_events = DomainEvents()
 
-    @property
-    def domain_events(self) -> DomainEventCollection:
-        if getattr(self, '_domain_events', None) is None:
-            self._domain_events = DomainEventCollection()
-        return self._domain_events

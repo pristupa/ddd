@@ -1,14 +1,14 @@
 from ddd import DomainEvent
-from ddd.domain_event_collection import DomainEventCollection
+from ddd.domain_event_queue import DomainEventQueue
 
 
 def test_new_domain_event_collection_is_empty():
-    collection = DomainEventCollection()
+    collection = DomainEventQueue()
     assert len(collection) == 0
 
 
 def test_domain_event_collection_registers_events():
-    collection = DomainEventCollection()
+    collection = DomainEventQueue()
     event1 = DomainEvent()
     event2 = DomainEvent()
     collection.register(event1)
@@ -18,7 +18,7 @@ def test_domain_event_collection_registers_events():
 
 
 def test_domain_event_collection_clears_events():
-    collection = DomainEventCollection()
+    collection = DomainEventQueue()
     collection.register(DomainEvent())
     collection.register(DomainEvent())
     list(collection)  # Empty handle all events

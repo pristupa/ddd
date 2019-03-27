@@ -18,12 +18,12 @@ class DomainEvents:
         if instance is None:
             return self
 
-        collection = instance.__dict__.get(self.field)
+        queue = instance.__dict__.get(self.field)
 
-        if collection is None:
-            instance.__dict__[self.field] = collection = DomainEventCollection()
+        if queue is None:
+            instance.__dict__[self.field] = queue = DomainEventQueue()
 
-        return collection
+        return queue
 
     def __set__(self, instance, value):
         raise AttributeError("Сan't set attribute")
@@ -32,7 +32,7 @@ class DomainEvents:
         self.field = name
 
 
-class DomainEventCollection(collections.abc.Collection):
+class DomainEventQueue(collections.abc.Collection):
 
     def __init__(self):
         self._events: List[DomainEvent] = []
@@ -40,7 +40,7 @@ class DomainEventCollection(collections.abc.Collection):
 
     def register(self, event: DomainEvent):
         if self._locked:
-            raise Locked('You can not register events during the lock')
+            raise Locked('You can not register events during the iteration')
         self._events.append(event)
 
     def __contains__(self, event: DomainEvent) -> bool:
@@ -48,7 +48,7 @@ class DomainEventCollection(collections.abc.Collection):
 
     def __iter__(self) -> Iterator[DomainEvent]:
         if self._locked:
-            raise Locked('You can not iterate during the lock')
+            raise Locked('You can not iterate multiple times simultaneously')
         self._locked = True
         yield from self._events
         self._events.clear()

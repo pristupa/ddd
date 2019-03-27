@@ -4,13 +4,14 @@ import uuid
 
 import pytest
 
+from ddd import AggregateRoot
 from ddd import DomainEvent
-from ddd import DomainEventCollection
+from ddd import DomainEventQueue
 from ddd import Entity
 from ddd import domain_event_handler
 from ddd import process_domain_events
-from ddd.domain_event_collection import DomainEvents
-from ddd.domain_event_collection import Locked
+from ddd.domain_event_queue import DomainEvents
+from ddd.domain_event_queue import Locked
 from ddd.domain_event_handler import delete_domain_event_handler
 from ddd.domain_event_handler import get_instance_getter
 from ddd.domain_event_handler import set_instance_getter
@@ -29,8 +30,8 @@ def empty_handler():
     delete_domain_event_handler(DomainEvent)
 
 
-class Aggregate(Entity):
-    domain_events = DomainEvents()
+class Aggregate(AggregateRoot, Entity):
+    pass
 
 
 class RecursiveDomainEvent(DomainEvent):
@@ -79,7 +80,7 @@ def test_not_going_to_infinite_loop_for_entities(empty_handler):
 
 @pytest.mark.usefixtures("empty_handler")
 def test_not_going_to_infinite_loop_for_additional_domain_events():
-    domain_event_collection = DomainEventCollection()
+    domain_event_collection = DomainEventQueue()
     domain_event_collection.register(DomainEvent())
     process_domain_events(lambda: domain_event_collection)
 
