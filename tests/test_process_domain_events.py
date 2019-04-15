@@ -1,17 +1,14 @@
 import inspect
-import itertools
 import uuid
 
 import pytest
 
 from ddd import AggregateRoot
 from ddd import DomainEvent
-from ddd import DomainEventQueue
+from ddd import DomainEvents
 from ddd import Entity
 from ddd import domain_event_handler
 from ddd import process_domain_events
-from ddd.domain_event_queue import DomainEvents
-from ddd.domain_event_queue import Locked
 from ddd.domain_event_handler import delete_domain_event_handler
 from ddd.domain_event_handler import get_instance_getter
 from ddd.domain_event_handler import set_instance_getter
@@ -30,7 +27,7 @@ def empty_handler():
     delete_domain_event_handler(DomainEvent)
 
 
-class Aggregate(AggregateRoot, Entity):
+class Aggregate(Entity, AggregateRoot):
     pass
 
 
@@ -65,6 +62,16 @@ def instance_getter():
     set_instance_getter(old_instance_getter)
 
 
+def create_domain_events_collector(*aggregate_roots: AggregateRoot):
+    def take_domain_events():
+        domain_events = []
+        for aggregate_root in aggregate_roots:
+            domain_events.extend(aggregate_root.domain_events)
+            aggregate_root.clear_domain_events()
+        return domain_events
+    return take_domain_events
+
+
 def test_not_going_to_infinite_loop_for_empty_domain_events():
     process_domain_events(lambda: [])
 
@@ -75,31 +82,19 @@ def test_not_going_to_infinite_loop_for_entities(empty_handler):
     aggregate.domain_events.register(domain_event)
     assert inspect.isfunction(empty_handler.empty_handle)
     assert domain_event in aggregate.domain_events
-    process_domain_events(lambda: aggregate.domain_events)
+    process_domain_events(create_domain_events_collector(aggregate))
 
 
 @pytest.mark.usefixtures("empty_handler")
 def test_not_going_to_infinite_loop_for_additional_domain_events():
-    domain_event_collection = DomainEventQueue()
-    domain_event_collection.register(DomainEvent())
-    process_domain_events(lambda: domain_event_collection)
+    domain_events = DomainEvents()
+    domain_events.register(DomainEvent())
 
-
-def test_try_set_domain_events_for_entity_with_domain_events():
-    aggregate = Aggregate(uuid.uuid4())
-    with pytest.raises(AttributeError):
-        aggregate.domain_events = []
-    assert isinstance(Aggregate.domain_events, DomainEvents)
-
-
-@pytest.mark.usefixtures("recursive_handler")
-def test_adding_domain_event_during_iteration_domain_events():
-    aggregate = Aggregate(id_=uuid.uuid4())
-    domain_event = RecursiveDomainEvent(aggregate, aggregate)
-    aggregate.domain_events.register(domain_event)
-
-    with pytest.raises(Locked):
-        process_domain_events(lambda: aggregate.domain_events)
+    def domain_event_collector():
+        domain_events_copy = list(domain_events)
+        domain_events.clear()
+        return domain_events_copy
+    process_domain_events(domain_event_collector)
 
 
 @pytest.mark.usefixtures("recursive_handler")
@@ -112,7 +107,7 @@ def test_recursive_domain_events():
     aggregate2.domain_events.register(domain_event2)
 
     with pytest.raises(MaximumRecursionException):
-        process_domain_events(lambda: itertools.chain(aggregate1.domain_events, aggregate2.domain_events))
+        process_domain_events(create_domain_events_collector(aggregate1, aggregate2))
 
 
 @pytest.mark.usefixtures("instance_getter")
