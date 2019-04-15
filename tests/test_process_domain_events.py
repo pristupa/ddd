@@ -62,12 +62,14 @@ def instance_getter():
     set_instance_getter(old_instance_getter)
 
 
-def take_domain_events(*aggregate_roots: AggregateRoot):
-    domain_events = []
-    for aggregate_root in aggregate_roots:
-        domain_events.extend(aggregate_root.domain_events)
-        aggregate_root.clear_domain_events()
-    return domain_events
+def create_domain_events_collector(*aggregate_roots: AggregateRoot):
+    def take_domain_events():
+        domain_events = []
+        for aggregate_root in aggregate_roots:
+            domain_events.extend(aggregate_root.domain_events)
+            aggregate_root.clear_domain_events()
+        return domain_events
+    return take_domain_events
 
 
 def test_not_going_to_infinite_loop_for_empty_domain_events():
@@ -80,7 +82,7 @@ def test_not_going_to_infinite_loop_for_entities(empty_handler):
     aggregate.domain_events.register(domain_event)
     assert inspect.isfunction(empty_handler.empty_handle)
     assert domain_event in aggregate.domain_events
-    process_domain_events(lambda: take_domain_events(aggregate))
+    process_domain_events(create_domain_events_collector(aggregate))
 
 
 @pytest.mark.usefixtures("empty_handler")
@@ -105,7 +107,7 @@ def test_recursive_domain_events():
     aggregate2.domain_events.register(domain_event2)
 
     with pytest.raises(MaximumRecursionException):
-        process_domain_events(lambda: take_domain_events(aggregate1, aggregate2))
+        process_domain_events(create_domain_events_collector(aggregate1, aggregate2))
 
 
 @pytest.mark.usefixtures("instance_getter")
