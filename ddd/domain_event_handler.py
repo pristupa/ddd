@@ -1,4 +1,6 @@
 import inspect
+import re
+import typing
 from collections import defaultdict
 from threading import Lock
 from typing import Callable
@@ -13,6 +15,7 @@ T = TypeVar('T')
 _instance_getter: Callable[[Type[T]], T] = lambda cls: cls()
 _domain_event_handlers = defaultdict(list)
 
+domain_events_class_name_pattern = re.compile(r'typing.List\[.+\]')
 
 # noinspection PyPep8Naming
 class domain_event_handler:
@@ -27,8 +30,10 @@ class domain_event_handler:
                 f'Method must have only 1 arguments: {method.__qualname__}. Count arguments : {len(func_spec.args) - 1}'
             )
         domain_event_class: Type[DomainEvent] = func_spec.annotations[func_spec.args[1]]
-
-        if not inspect.isclass(domain_event_class):
+        if (
+            not inspect.isclass(domain_event_class) and
+            not domain_events_class_name_pattern.match(str(domain_event_class))
+        ):
             raise AssertionError('First argument must have annotation and this annotation must be class')
         self._domain_event_class = domain_event_class
 
@@ -40,13 +45,22 @@ class domain_event_handler:
             _domain_event_handlers[self._domain_event_class].append((owner, self._method))
 
 
-def handle_domain_event(domain_event: DomainEvent) -> None:
-    domain_event_class = type(domain_event)
-    if domain_event_class not in _domain_event_handlers:
+def handle_domain_events(domain_event_class: typing.Type[DomainEvent], domain_events: typing.List[DomainEvent]) -> None:
+    if not domain_events:
+        return None
+
+    if typing.List[domain_event_class] in _domain_event_handlers:
+        for handler_cls, handler in _domain_event_handlers[typing.List[domain_event_class]]:
+            handler_instance = _instance_getter(handler_cls)
+            handler(handler_instance, domain_events)
+
+    if domain_event_class not in _domain_event_handlers and typing.List[domain_event_class] in _domain_event_handlers:
         warnings.warn(f'Unknown domain event {domain_event_class}. Please register at least one domain event handler')
+
     for handler_cls, handler in _domain_event_handlers[domain_event_class]:
         handler_instance = _instance_getter(handler_cls)
-        handler(handler_instance, domain_event)
+        for domain_event in domain_events:
+            handler(handler_instance, domain_event)
 
 
 def delete_domain_event_handler(cls):
