@@ -20,7 +20,7 @@ class CustomDomainEvent(DomainEvent):
 def empty_handler():
     class Handler:
         handled_domain_events = []
-        many_handled_domain_events = []
+        handled_many_domain_events = []
 
         @domain_event_handler
         def empty_handle(self, domain_event: CustomDomainEvent):
@@ -28,7 +28,7 @@ def empty_handler():
 
         @domain_event_handler
         def handle_many(self, domain_events: typing.List[CustomDomainEvent]):
-            self.many_handled_domain_events.append(domain_events)
+            self.handled_many_domain_events.append(domain_events)
 
     yield Handler()
     delete_domain_event_handler(CustomDomainEvent)
@@ -58,4 +58,4 @@ def test_process_domain_events(empty_handler):
 
     # Assert
     assert empty_handler.handled_domain_events == [domain_event]
-    assert empty_handler.many_handled_domain_events == [[domain_event]]
+    assert empty_handler.handled_many_domain_events == [[domain_event]]
